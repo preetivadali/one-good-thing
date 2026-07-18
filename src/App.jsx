@@ -61,6 +61,32 @@ function App() {
             ? "Loading message..."
             : message || "Click a button to load a message from the API box."}
         </div>
+
+        <div className="flex justify-center gap-3 pt-4 flex-nowrap">
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded-full border border-red-300 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 shadow-sm transition hover:bg-red-100 dark:border-red-700 dark:bg-red-900/30 dark:text-red-200"
+          >
+            <span>❤️</span>
+            Save
+          </button>
+
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded-full border border-blue-300 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 shadow-sm transition hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-200"
+          >
+            <span>📋</span>
+            Copy
+          </button>
+
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded-full border border-green-300 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 shadow-sm transition hover:bg-green-100 dark:border-green-700 dark:bg-green-900/30 dark:text-green-200"
+          >
+            <span>🔄</span>
+            Another
+          </button>
+        </div>
       </div>
     </>
   );
