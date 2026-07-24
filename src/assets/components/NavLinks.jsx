@@ -1,27 +1,30 @@
-
-
-/**
- * NavLinks component — renders a list of navigation links.
- * Keep the data in one place (NAV_ITEMS) to make additions simple.
- */
 const NAV_ITEMS = [
-  { label: "Home", href: "#" },
-  { label: "Favorites", href: "#" },
-  { label: "About", href: "#" },
+  { label: "Home", value: "home" },
+  { label: "Favorites", value: "favorites" },
+  { label: "About", value: "about" },
 ];
 
-export default function NavLinks() {
+export default function NavLinks({ currentPage, onNavigate }) {
   return (
-    <div className="flex items-center gap-0.5 text-lg font-medium">
-      {NAV_ITEMS.map((item) => (
-        <a
-          key={item.label}
-          href={item.href}
-          className="hover:text-purple-500 transition duration-300 px-0.5"
-        >
-          {item.label}
-        </a>
-      ))}
+    <div className="flex items-center gap-1 text-sm font-medium sm:text-base">
+      {NAV_ITEMS.map((item) => {
+        const isActive = currentPage === item.value;
+
+        return (
+          <button
+            key={item.label}
+            type="button"
+            onClick={() => onNavigate(item.value)}
+            className={`rounded-full px-3 py-2 transition duration-300 ${
+              isActive
+                ? "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-200"
+                : "text-slate-700 hover:text-purple-500 dark:text-slate-200"
+            }`}
+          >
+            {item.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

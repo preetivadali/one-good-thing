@@ -5,7 +5,7 @@ import ThemeToggle from "./ThemeToggle";
 
 const STORAGE_KEY = "one-good-thing:theme";
 
-export default function Navbar() {
+export default function Navbar({ currentPage, onNavigate }) {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem(STORAGE_KEY) === "dark";
   });
@@ -17,11 +17,11 @@ export default function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 bg-white shadow-md dark:bg-slate-900 dark:text-white">
-      <div className="max-w-7xl mx-auto flex justify-between items-center px-8 py-4">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-8">
         <Brand />
 
-        <div className="flex items-center">
-          <NavLinks />
+        <div className="flex items-center gap-3">
+          <NavLinks currentPage={currentPage} onNavigate={onNavigate} />
           <ThemeToggle
             isDark={isDarkMode}
             onToggle={() => setIsDarkMode(!isDarkMode)}
