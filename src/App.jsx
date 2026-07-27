@@ -3,136 +3,178 @@ import Navbar from "./assets/components/Navbar";
 import Home from "./Pages/Home";
 import Favorites from "./Pages/Favorites";
 import About from "./Pages/About";
+import BUTTON_LABELS from "./constants/buttonLabels";
+import { API_URL, getFallbackMessage } from "./constants/apiConfig";
 
-const BUTTON_LABELS = [
-  "Add",
-  "Motivation",
-  "Calm",
-  "Productivity",
-  "Learn",
-  "Smile",
-  "Fact",
-];
+const STORAGE_KEY = "one-good-thing:favorites";
 
-const FAVORITES_STORAGE_KEY = "one-good-thing:favorites";
+// Load favorites from Local Storage
+const loadFavorites = () => {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  } catch {
+    return [];
+  }
+};
 
 function App() {
+  // ======================
+  // State
+  // ======================
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [favorites, setFavorites] = useState(() => {
-    if (typeof window === "undefined") {
-      return [];
-    }
-
-    try {
-      return JSON.parse(localStorage.getItem(FAVORITES_STORAGE_KEY) ?? "[]");
-    } catch {
-      return [];
-    }
-  });
+  const [favorites, setFavorites] = useState(loadFavorites);
   const [feedback, setFeedback] = useState("");
   const [currentPage, setCurrentPage] = useState("home");
 
+  // ======================
+  // Save favorites whenever they change
+  // ======================
   useEffect(() => {
-    localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
   }, [favorites]);
 
-  const handleButtonClick = async (label) => {
+  // ======================
+  // Get a message from the API
+  // ======================
+  const getMessage = async (category) => {
     setLoading(true);
     setMessage("");
     setFeedback("");
 
+    // If API_URL is still the placeholder, use a local fallback message.
+    const isPlaceholder = API_URL.includes("your-api-url.com");
+
+    if (isPlaceholder) {
+      // short simulated delay for UX
+      setTimeout(() => {
+        setMessage(getFallbackMessage(category));
+        setLoading(false);
+      }, 300);
+
+      return;
+    }
+
     try {
-      const response = await fetch(
-        `https://your-api-url.com/messages?category=${label}`
-      );
+      const response = await fetch(`${API_URL}?category=${encodeURIComponent(category)}`);
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
 
       const data = await response.json();
-
-      setMessage(data.message);
-    } catch {
-      setMessage("Something went wrong. Please try again.");
+      setMessage(data.message ?? getFallbackMessage(category));
+    } catch (err) {
+      // On error, show a helpful local fallback rather than an empty error.
+      setMessage(getFallbackMessage(category));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSave = () => {
-    const trimmedMessage = message.trim();
+  // ======================
+  // Save current message
+  // ======================
+  const saveMessage = () => {
+    const text = message.trim();
 
-    if (!trimmedMessage) {
-      setFeedback("Save a message first.");
-      return;
+    if (!text) {
+      return setFeedback("Save a message first.");
     }
 
-    const alreadySaved = favorites.some((item) => item.text === trimmedMessage);
+    const exists = favorites.some((item) => item.text === text);
 
-    if (alreadySaved) {
-      setFeedback("That message is already in favorites.");
-      return;
+    if (exists) {
+      return setFeedback("Message already saved.");
     }
 
-    setFavorites((previous) => [
-      { id: Date.now(), text: trimmedMessage },
-      ...previous,
+    setFavorites([
+      {
+        id: Date.now(),
+        text,
+      },
+      ...favorites,
     ]);
+
     setFeedback("Saved to favorites.");
   };
 
-  const handleCopy = async () => {
-    const trimmedMessage = message.trim();
-
-    if (!trimmedMessage) {
-      setFeedback("There is no message to copy yet.");
-      return;
+  // ======================
+  // Copy message
+  // ======================
+  const copyMessage = async () => {
+    if (!message.trim()) {
+      return setFeedback("No message to copy.");
     }
 
     try {
-      await navigator.clipboard.writeText(trimmedMessage);
-      setFeedback("Copied to clipboard.");
+      await navigator.clipboard.writeText(message);
+      setFeedback("Copied!");
     } catch {
-      setFeedback("Copy failed. Please try again.");
+      setFeedback("Copy failed.");
     }
   };
 
-  const handleAnother = () => {
-    const nextLabel =
+  // ======================
+  // Get another random message
+  // ======================
+  const anotherMessage = () => {
+    const randomCategory =
       BUTTON_LABELS[Math.floor(Math.random() * BUTTON_LABELS.length)];
-    handleButtonClick(nextLabel);
+
+    getMessage(randomCategory);
   };
 
-  const handleDelete = (id) => {
-    setFavorites((previous) => previous.filter((item) => item.id !== id));
+  // ======================
+  // Delete favorite
+  // ======================
+  const deleteFavorite = (id) => {
+    setFavorites(favorites.filter((item) => item.id !== id));
     setFeedback("Removed from favorites.");
   };
 
-  const renderPage = () => {
-    if (currentPage === "favorites") {
-      return <Favorites favorites={favorites} onDelete={handleDelete} />;
-    }
+  // ======================
+  // Choose which page to display
+  // ======================
+  let page;
 
-    if (currentPage === "about") {
-      return <About />;
-    }
+  switch (currentPage) {
+    case "favorites":
+      page = (
+        <Favorites
+          favorites={favorites}
+          onDelete={deleteFavorite}
+        />
+      );
+      break;
 
-    return (
-      <Home
-        message={message}
-        loading={loading}
-        feedback={feedback}
-        buttonLabels={BUTTON_LABELS}
-        onButtonClick={handleButtonClick}
-        onSave={handleSave}
-        onCopy={handleCopy}
-        onAnother={handleAnother}
-      />
-    );
-  };
+    case "about":
+      page = <About />;
+      break;
+
+    default:
+      page = (
+        <Home
+          message={message}
+          loading={loading}
+          feedback={feedback}
+          buttonLabels={BUTTON_LABELS}
+          onButtonClick={getMessage}
+          onSave={saveMessage}
+          onCopy={copyMessage}
+          onAnother={anotherMessage}
+        />
+      );
+  }
 
   return (
     <>
-      <Navbar currentPage={currentPage} onNavigate={setCurrentPage} />
-      {renderPage()}
+      <Navbar
+        currentPage={currentPage}
+        onNavigate={setCurrentPage}
+      />
+
+      {page}
     </>
   );
 }
