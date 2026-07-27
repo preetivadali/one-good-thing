@@ -1,4 +1,4 @@
-import React from "react";
+
 
 /**
  * Brand component — shows the circular logo and site title.
